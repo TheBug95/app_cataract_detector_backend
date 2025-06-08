@@ -1,0 +1,13 @@
+# Blueprint de Render; se lee al crear el servicio
+services:
+  - type: web
+    name: cataract-api
+    runtime: python
+    plan: free
+    envVars:
+      - key: HF_API_TOKEN      # lo pones en el dashboard, valor secreto
+        sync: false
+      - key: SAM_MODEL_ID      # p.e. 'facebook/sam-vit-huge' o 'medsam/sam'
+        sync: true
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
