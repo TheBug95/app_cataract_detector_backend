@@ -44,18 +44,14 @@ async def get_results():
     last_entry = data[-1]
     image_path = last_entry["path"]
 
-    # Simular resultado del modelo
-    result = fake_predict(image_path)  # reemplazar por tu lógica real
+    # Generate random results
+    result = {
+        "diagnosis": random.choice(["cataract", "non cataract"]),
+        "confidence": round(random.triangular(0, 1, 0.8), 2) ,
+        "image_path": image_path
+    }
 
     return {
         "filename": last_entry["filename"],
         "result": result
-    }
-
-# Función de prueba (puedes sustituirla por tu modelo real)
-def fake_predict(image_path):
-    return {
-        "diagnosis": "cataract",
-        "confidence": 0.92,
-        "image_path": image_path
     }
