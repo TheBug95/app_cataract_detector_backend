@@ -1,7 +1,4 @@
 fastapi==0.111
 uvicorn[standard]==0.29
 python-multipart==0.0.19
-opencv-python==4.11.*
-scikit-image==0.23.*
 pydantic~=2.7.1
-python-dotenv~=1.0.1
