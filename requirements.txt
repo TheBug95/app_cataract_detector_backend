@@ -2,3 +2,6 @@ fastapi==0.111
 uvicorn[standard]==0.29
 python-multipart==0.0.19
 pydantic~=2.7.1
+requests==2.32.4
+google-auth==2.40.3
+pillow==11.3.0

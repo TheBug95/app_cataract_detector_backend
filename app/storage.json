@@ -1,1 +1,14 @@
-{}
+[
+  {
+    "filename": "imagen.jpg",
+    "path": "app/images/imagen.jpg",
+    "timestamp": "2025-07-05T14:33:25.338127",
+    "size": 76814
+  },
+  {
+    "filename": "imagen.jpg",
+    "path": "app/images/imagen.jpg",
+    "timestamp": "2025-07-05T14:46:41.035674",
+    "size": 76814
+  }
+]
