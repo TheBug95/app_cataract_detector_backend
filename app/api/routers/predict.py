@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 from .ai_rest import predict_vertex_ai_rest, preprocess_image
 import os
 import tempfile
+from ..maskDetector.execution import process_masks
+from ..maskDetector.config import PROTO_VIT, get_emb_vit
+
 
 router = APIRouter(prefix="/predict", tags=["Prediction"])
 
@@ -39,11 +42,18 @@ async def predict(image: UploadFile = File(...)):
             
             # Get predictions from Vertex AI
             prediction_result = predict_vertex_ai_rest(tmp.name)
+            maskResult = resultados = process_masks(
+                                    prediction_result=prediction_result,  # El JSON que viene de Vertex AI
+                                    proto=PROTO_VIT,                     # Los prototipos cargados
+                                    k=36,                                # Índice del prototipo
+                                    get_emb_func=get_emb_vit             # Función para embeddings
+                                )
             
             return {
                 "status": "success",
                 "filename": image.filename,
-                "mask_data": prediction_result
+                "mask_data": prediction_result,
+                "MASK Results": maskResult
             }
             
     except Exception as e:

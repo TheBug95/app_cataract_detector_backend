@@ -5,3 +5,11 @@ pydantic~=2.7.1
 requests==2.32.4
 google-auth==2.40.3
 pillow==11.3.0
+numpy==2.2.6
+pycocotools==2.0.10
+matplotlib==3.10.3
+torch==2.7.1
+torchvision==0.22.1
+scikit-learn==1.7.0 
+
+
