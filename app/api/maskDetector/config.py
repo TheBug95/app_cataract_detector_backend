@@ -17,6 +17,8 @@ pickle_path = os.path.join(current_dir, "kde_univar_protos_vit.pkl")
 with open(pickle_path, "rb") as f:
     PROTO_VIT = pickle.load(f)
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # 2) Preparamos ambos encoders y transforms
 
 # -- ViT --
