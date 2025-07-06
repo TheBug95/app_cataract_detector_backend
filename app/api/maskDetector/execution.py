@@ -9,7 +9,7 @@ from pycocotools import mask as mask_utils
 from .config import PROTO_VIT, get_emb_vit
 from .imageProcess import decode_sam_rle
 
-# Configuración básica de logging
+# Basic logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -20,60 +20,60 @@ def process_masks(
     visualize: bool = True
 ) -> Tuple[str, Optional[np.ndarray], Optional[Dict[str, Any]]]:
     """
-    Procesa máscaras binarias en formato SAM aplicando exactamente el mismo
-    procesamiento que catarata_mask_selector
+    Processes binary masks in SAM format applying exactly the same
+    processing as catarata_mask_selector
     
     Args:
-        maskData: Lista de diccionarios con:
-            - counts: string con datos RLE
-            - size: lista con [height, width]
-        processed_image: Imagen procesada en bytes (resultado de preprocess_image)
-        k: Índice del prototipo (por defecto 36)
-        visualize: Mostrar visualizaciones durante el procesamiento
+        maskData: List of dictionaries with:
+            - counts: string with RLE data
+            - size: list with [height, width]
+        processed_image: Processed image in bytes (result of preprocess_image)
+        k: Prototype index (default 36)
+        visualize: Show visualizations during processing
     
     Returns:
-        Tuple con (etiqueta, máscara binaria, datos originales de la máscara)
-        - etiqueta: "Catarata" o "No Catarata"
-        - máscara binaria: array numpy o None
-        - datos originales: dict con counts y size de la mejor máscara, o None
+        Tuple with (label, binary mask, original mask data)
+        - label: "Cataract" or "No Cataract"
+        - binary mask: numpy array or None
+        - original data: dict with counts and size of the best mask, or None
     """
-    # Log inicial
-    logger.info(f"=== INICIANDO PROCESAMIENTO DE {len(maskData)} MÁSCARAS ===")
-    logger.info(f"Parámetro k: {k}")
+    # Initial log
+    logger.info(f"=== STARTING PROCESSING OF {len(maskData)} MASKS ===")
+    logger.info(f"Parameter k: {k}")
     
-    # 1) Cargar imagen procesada desde bytes
+    # 1) Load processed image from bytes
     try:
         img_pil: Image.Image = Image.open(io.BytesIO(processed_image)).convert("RGB")
         img_np: np.ndarray = np.asarray(img_pil)
-        logger.info(f"Imagen cargada exitosamente. Dimensiones: {img_np.shape}")
-        logger.info(f"Tamaño de imagen: {img_pil.size} (W x H)")
+        logger.info(f"Image loaded successfully. Dimensions: {img_np.shape}")
+        logger.info(f"Image size: {img_pil.size} (W x H)")
     except Exception as e:
-        logger.error(f"Error cargando imagen desde bytes: {str(e)}")
-        return "No Catarata", None
+        logger.error(f"Error loading image from bytes: {str(e)}")
+        return "No Cataract", None, None
     
-    # 2) Decodificar todas las máscaras RLE
-    logger.info("=== DECODIFICANDO MÁSCARAS RLE ===")
+    # 2) Decode all RLE masks
+    logger.info("=== DECODING RLE MASKS ===")
     decoded_masks = []
-    original_masks = []  # Guardar referencias a las máscaras originales
+    original_masks = []  # Store references to original masks
     for idx, m in enumerate(maskData):
         try:
-            logger.debug(f"Procesando máscara {idx+1}/{len(maskData)}")
+            logger.debug(f"Processing mask {idx+1}/{len(maskData)}")
             
-            # Verificar que tenemos los datos necesarios
+            # Verify we have the necessary data
             if not all(key in m for key in ['counts', 'size']):
-                logger.warning(f"Máscara {idx+1} no tiene los campos requeridos (counts, size)")
+                logger.warning(f"Mask {idx+1} does not have required fields (counts, size)")
                 continue
                 
-            # Decodificar la máscara RLE
+            # Decode RLE mask
             seg = decode_sam_rle(m)
-            logger.debug(f"Máscara {idx+1} decodificada. Shape: {seg.shape}")
+            logger.debug(f"Mask {idx+1} decoded. Shape: {seg.shape}")
             
-            # Verificar que las dimensiones coinciden con la imagen
+            # Verify dimensions match the image
             if seg.shape != img_np.shape[:2]:
-                logger.warning(f"Máscara {idx+1} tiene dimensiones {seg.shape} vs imagen {img_np.shape[:2]}")
+                logger.warning(f"Mask {idx+1} has dimensions {seg.shape} vs image {img_np.shape[:2]}")
                 continue
             
-            # Solo agregar máscaras no vacías
+            # Only add non-empty masks
             if np.any(seg):
                 pixel_count = np.sum(seg)
                 decoded_masks.append({
@@ -82,91 +82,91 @@ def process_masks(
                     'width': m['size'][1],
                     'pixel_count': pixel_count
                 })
-                original_masks.append(m)  # Guardar la máscara original
-                logger.info(f"Máscara {idx+1} agregada exitosamente. Píxeles: {pixel_count}")
+                original_masks.append(m)  # Store original mask
+                logger.info(f"Mask {idx+1} added successfully. Pixels: {pixel_count}")
             else:
-                logger.warning(f"Máscara {idx+1} está vacía (todos ceros)")
+                logger.warning(f"Mask {idx+1} is empty (all zeros)")
                 
         except Exception as e:
-            logger.error(f"Error decodificando máscara {idx+1}: {str(e)}")
+            logger.error(f"Error decoding mask {idx+1}: {str(e)}")
             continue
 
     if not decoded_masks:
-        logger.error("No hay máscaras válidas para procesar")
-        return "No Catarata", None, None
+        logger.error("No valid masks to process")
+        return "No Cataract", None, None
 
-    logger.info(f"=== {len(decoded_masks)} MÁSCARAS DECODIFICADAS EXITOSAMENTE ===")
+    logger.info(f"=== {len(decoded_masks)} MASKS DECODED SUCCESSFULLY ===")
 
-    # 3) Recupera estadísticos de KDE para este *k* (EXACTAMENTE IGUAL QUE LA FUNCIÓN ORIGINAL)
+    # 3) Retrieve KDE statistics for this *k* (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
     proto = PROTO_VIT
     get_emb = get_emb_vit
     kdes = proto[k]["kdes"]
     t_min = proto[k]["theta_min"]
     t_max = proto[k]["theta_max"]
     
-    logger.info(f"=== CONFIGURACIÓN DEL MODELO ===")
-    logger.info(f"Usando k={k}")
+    logger.info(f"=== MODEL CONFIGURATION ===")
+    logger.info(f"Using k={k}")
     logger.info(f"θ_min={t_min:.4f}")
     logger.info(f"θ_max={t_max:.4f}")
-    logger.info(f"Número de KDEs: {len(kdes)}")
+    logger.info(f"Number of KDEs: {len(kdes)}")
 
     scores: List[float] = []
     preds: List[int] = []
 
-    # 4) Evalúa cada máscara (EXACTAMENTE IGUAL QUE LA FUNCIÓN ORIGINAL)
-    logger.info("=== EVALUANDO MÁSCARAS ===")
+    # 4) Evaluate each mask (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
+    logger.info("=== EVALUATING MASKS ===")
     for i, m in enumerate(decoded_masks):
         try:
-            logger.info(f"--- Procesando máscara {i+1}/{len(decoded_masks)} ---")
+            logger.info(f"--- Processing mask {i+1}/{len(decoded_masks)} ---")
             
             seg = m['segmentation']
             ys, xs = np.where(seg)
             
             if len(xs) == 0:
-                logger.warning(f"Máscara {i+1} está vacía - saltando")
+                logger.warning(f"Mask {i+1} is empty - skipping")
                 continue
                 
             x0, x1 = xs.min(), xs.max()
             y0, y1 = ys.min(), ys.max()
             
-            logger.info(f"Máscara {i+1} - Bounding box: x[{x0}-{x1}], y[{y0}-{y1}]")
-            logger.info(f"Máscara {i+1} - Dimensiones bbox: {x1-x0+1} x {y1-y0+1}")
-            logger.info(f"Máscara {i+1} - Píxeles activos: {m['pixel_count']}")
+            logger.info(f"Mask {i+1} - Bounding box: x[{x0}-{x1}], y[{y0}-{y1}]")
+            logger.info(f"Mask {i+1} - Bbox dimensions: {x1-x0+1} x {y1-y0+1}")
+            logger.info(f"Mask {i+1} - Active pixels: {m['pixel_count']}")
 
-            # Recortar región de interés DE LA IMAGEN ORIGINAL
+            # Crop region of interest FROM THE ORIGINAL IMAGE
             crop = img_pil.crop((x0, y0, x1 + 1, y1 + 1))
-            logger.debug(f"Máscara {i+1} - Crop creado. Tamaño: {crop.size}")
+            logger.debug(f"Mask {i+1} - Crop created. Size: {crop.size}")
             
-            # Obtener embedding
+            # Get embedding
             emb = get_emb(crop)
-            logger.debug(f"Máscara {i+1} - Embedding obtenido. Shape: {emb.shape}")
+            logger.debug(f"Mask {i+1} - Embedding obtained. Shape: {emb.shape}")
             
-            # 4.1) Log‑score usando el KDE de *cada* dimensión
+            # 4.1) Log-score using the KDE of *each* dimension
             logp = sum(kde.score_samples([[emb[d]]])[0] for d, kde in enumerate(kdes))
             scores.append(logp)
             
-            # 4.2) Clasificación binaria: 1 = dentro del rango (catarata)
+            # 4.2) Binary classification: 1 = within range (cataract)
             pred = int(t_min <= logp <= t_max)
             preds.append(pred)
             
-            # Log detallado del resultado
-            logger.info(f"Máscara {i+1} - Log-probabilidad: {logp:.4f}")
-            logger.info(f"Máscara {i+1} - Predicción: {'CATARATA' if pred else 'NO CATARATA'}")
-            logger.info(f"Máscara {i+1} - En rango [{t_min:.4f}, {t_max:.4f}]: {pred == 1}")
+            # Detailed result logging
+            logger.info(f"Mask {i+1} - Log-probability: {logp:.4f}")
+            logger.info(f"Mask {i+1} - Prediction: {'CATARACT' if pred else 'NO CATARACT'}")
+            logger.info(f"Mask {i+1} - In range [{t_min:.4f}, {t_max:.4f}]: {pred == 1}")
             
-            # 4.3) Visualización individual (DURANTE EL PROCESAMIENTO)
+            # 4.3) Individual visualization (DURING PROCESSING)
             if visualize:
-                logger.debug(f"Visualizando máscara {i+1}")
+                logger.debug(f"Visualizing mask {i+1}")
                 plt.figure(figsize=(12, 5))
                 
-                # Subplot 1: Imagen original con máscara superpuesta
+                # Subplot 1: Original image with mask overlay
                 plt.subplot(1, 2, 1)
                 plt.imshow(img_np)
                 
-                # Crear polígono de la máscara
+                # Create mask polygon
                 mask_points = np.column_stack([xs, ys])
                 if len(mask_points) > 0:
-                    # Tomar solo algunos puntos para el polígono (para evitar sobrecarga)
+                    # Take only some points for the polygon (to avoid overload)
                     step = max(1, len(mask_points) // 100)
                     mask_points_sampled = mask_points[::step]
                     
@@ -179,19 +179,19 @@ def process_masks(
                     )
                     plt.gca().add_patch(poly)
                 
-                # Texto con información
+                # Text with information
                 plt.text(
                     x0,
                     y0 - 10,
-                    f"Máscara #{i+1}\nlogp = {logp:.3f}\n→ {'CAT' if pred else 'NO'}",
+                    f"Mask #{i+1}\nlogp = {logp:.3f}\n→ {'CAT' if pred else 'NO'}",
                     color="white",
                     fontsize=10,
                     bbox=dict(facecolor="red" if pred else "blue", alpha=0.7, pad=4),
                 )
                 plt.axis("off")
-                plt.title(f"Máscara {i+1}/{len(decoded_masks)} - {'CATARATA' if pred else 'NO CATARATA'}")
+                plt.title(f"Mask {i+1}/{len(decoded_masks)} - {'CATARACT' if pred else 'NO CATARACT'}")
                 
-                # Subplot 2: Crop de la región
+                # Subplot 2: Region crop
                 plt.subplot(1, 2, 2)
                 plt.imshow(crop)
                 plt.title(f"Crop - {crop.size[0]}x{crop.size[1]}px")
@@ -201,46 +201,46 @@ def process_masks(
                 plt.show()
                 
         except Exception as e:
-            logger.error(f"Error procesando máscara {i+1}: {str(e)}")
+            logger.error(f"Error processing mask {i+1}: {str(e)}")
             continue
 
-    # 5) Selecciona la mejor máscara dentro de los positivos (EXACTAMENTE IGUAL QUE LA FUNCIÓN ORIGINAL)
-    logger.info("=== SELECCIÓN DE MEJOR MÁSCARA ===")
+    # 5) Select the best mask among positives (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
+    logger.info("=== BEST MASK SELECTION ===")
     positives = [i for i, p in enumerate(preds) if p == 1]
     
-    logger.info(f"Máscaras positivas encontradas: {len(positives)} de {len(preds)}")
+    logger.info(f"Positive masks found: {len(positives)} out of {len(preds)}")
     
     if positives:
-        # Entre las positivas, la de mayor log‑probabilidad
+        # Among positives, the one with highest log-probability
         best_idx = max(positives, key=lambda i: scores[i])
-        result_label = "Catarata"
+        result_label = "Cataract"
         
-        logger.info(f"=== RESULTADO FINAL: CATARATA DETECTADA ===")
-        logger.info(f"Mejor máscara: #{best_idx+1}")
-        logger.info(f"Log-probabilidad de la mejor: {scores[best_idx]:.4f}")
-        logger.info(f"Scores de todas las máscaras positivas:")
+        logger.info(f"=== FINAL RESULT: CATARACT DETECTED ===")
+        logger.info(f"Best mask: #{best_idx+1}")
+        logger.info(f"Log-probability of the best: {scores[best_idx]:.4f}")
+        logger.info(f"Scores of all positive masks:")
         for pos_idx in positives:
-            logger.info(f"  Máscara #{pos_idx+1}: {scores[pos_idx]:.4f}")
+            logger.info(f"  Mask #{pos_idx+1}: {scores[pos_idx]:.4f}")
             
     else:
-        # Ninguna máscara fue considerada catarata
-        logger.info("=== RESULTADO FINAL: NO CATARATA ===")
-        logger.info("Ninguna máscara cayó dentro del rango especificado")
-        logger.info("Scores de todas las máscaras:")
+        # No mask was considered cataract
+        logger.info("=== FINAL RESULT: NO CATARACT ===")
+        logger.info("No mask fell within the specified range")
+        logger.info("Scores of all masks:")
         for idx, score in enumerate(scores):
-            logger.info(f"  Máscara #{idx+1}: {score:.4f} (fuera de rango)")
+            logger.info(f"  Mask #{idx+1}: {score:.4f} (out of range)")
         
         if visualize:
-            print("No Catarata — ninguna máscara cayó dentro del rango especificado.")
-        return "No Catarata", None, None
+            print("No Cataract — no mask fell within the specified range.")
+        return "No Cataract", None, None
 
-    # 6) Extrae máscara binaria de la mejor selección (EXACTAMENTE IGUAL QUE LA FUNCIÓN ORIGINAL)
+    # 6) Extract binary mask from the best selection (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
     best_mask_np: np.ndarray = decoded_masks[best_idx]["segmentation"].astype(np.uint8)
     best_mask_original: Dict[str, Any] = original_masks[best_idx]
     
-    logger.info(f"Máscara final extraída. Shape: {best_mask_np.shape}")
-    logger.info(f"Píxeles activos en máscara final: {np.sum(best_mask_np)}")
-    logger.info(f"Datos originales de la mejor máscara: counts length={len(best_mask_original['counts'])}, size={best_mask_original['size']}")
-    logger.info("=== PROCESAMIENTO COMPLETADO EXITOSAMENTE ===")
+    logger.info(f"Final mask extracted. Shape: {best_mask_np.shape}")
+    logger.info(f"Active pixels in final mask: {np.sum(best_mask_np)}")
+    logger.info(f"Original data of the best mask: counts length={len(best_mask_original['counts'])}, size={best_mask_original['size']}")
+    logger.info("=== PROCESSING COMPLETED SUCCESSFULLY ===")
 
     return result_label, best_mask_np, best_mask_original

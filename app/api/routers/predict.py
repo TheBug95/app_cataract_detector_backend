@@ -43,16 +43,16 @@ async def predict(image: UploadFile = File(...)):
             APIresults = predict_vertex_ai_rest(tmp.name)
             APIprocessed_results = [{"counts": mask["counts"], "size": mask["size"]} for mask in APIresults["masks"]]
 
-            # Procesar las máscaras
+            # Process the masks
             result_label, best_mask_np, best_mask_original = process_masks(APIprocessed_results, processed_image)
 
-            # Preparar respuesta según el resultado
-            if result_label == "Catarata" and best_mask_original is not None:
+            # Prepare response according to the result
+            if result_label == "Cataract" and best_mask_original is not None:
                 return {
                     "status": "success",
                     "result": {
-                        "prediction": "Catarata",
-                        "confidence": "high",  # Podrías calcular esto basado en el score
+                        "prediction": "Cataract",
+                        "confidence": "high",  # You could calculate this based on the score
                         "best_mask": {
                             "counts": best_mask_original["counts"],
                             "size": best_mask_original["size"]
@@ -64,8 +64,8 @@ async def predict(image: UploadFile = File(...)):
                 return {
                     "status": "success",
                     "result": {
-                        "prediction": "No Catarata",
-                        "message": "No se encontraron cataratas en la imagen",
+                        "prediction": "No Cataract",
+                        "message": "No cataracts found in the image",
                         "total_masks_processed": len(APIprocessed_results)
                     }
                 }
