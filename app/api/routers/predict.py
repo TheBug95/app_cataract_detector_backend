@@ -4,7 +4,6 @@ from .ai_rest import predict_vertex_ai_rest, preprocess_image
 import os
 import tempfile
 from ..maskDetector.execution import process_masks
-from ..maskDetector.config import PROTO_VIT, get_emb_vit
 
 
 router = APIRouter(prefix="/predict", tags=["Prediction"])
@@ -41,20 +40,35 @@ async def predict(image: UploadFile = File(...)):
             tmp.flush()
             
             # Get predictions from Vertex AI
-            prediction_result = predict_vertex_ai_rest(tmp.name)
-            maskResult = resultados = process_masks(
-                                    prediction_result=prediction_result,  # El JSON que viene de Vertex AI
-                                    proto=PROTO_VIT,                     # Los prototipos cargados
-                                    k=36,                                # Índice del prototipo
-                                    get_emb_func=get_emb_vit             # Función para embeddings
-                                )
-            
-            return {
-                "status": "success",
-                "filename": image.filename,
-                "mask_data": prediction_result,
-                "MASK Results": maskResult
-            }
+            APIresults = predict_vertex_ai_rest(tmp.name)
+            APIprocessed_results = [{"counts": mask["counts"], "size": mask["size"]} for mask in APIresults["masks"]]
+
+            # Procesar las máscaras
+            result_label, best_mask_np, best_mask_original = process_masks(APIprocessed_results, processed_image)
+
+            # Preparar respuesta según el resultado
+            if result_label == "Catarata" and best_mask_original is not None:
+                return {
+                    "status": "success",
+                    "result": {
+                        "prediction": "Catarata",
+                        "confidence": "high",  # Podrías calcular esto basado en el score
+                        "best_mask": {
+                            "counts": best_mask_original["counts"],
+                            "size": best_mask_original["size"]
+                        },
+                        "total_masks_processed": len(APIprocessed_results)
+                    }
+                }
+            else:
+                return {
+                    "status": "success",
+                    "result": {
+                        "prediction": "No Catarata",
+                        "message": "No se encontraron cataratas en la imagen",
+                        "total_masks_processed": len(APIprocessed_results)
+                    }
+                }
             
     except Exception as e:
         raise HTTPException(

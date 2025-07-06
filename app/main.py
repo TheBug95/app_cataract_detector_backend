@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .api.routers import predict, results
+from .api.routers import predict
 
 app = FastAPI(
     title="Cataract Detection API",
@@ -7,5 +7,4 @@ app = FastAPI(
     version="1.0.0",
 )
 
-app.include_router(predict.router)
-app.include_router(results.router)  
+app.include_router(predict.router)  
