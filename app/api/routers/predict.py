@@ -44,7 +44,7 @@ async def predict(image: UploadFile = File(...)):
             APIprocessed_results = [{"counts": mask["counts"], "size": mask["size"]} for mask in APIresults["masks"]]
 
             # Process the masks
-            result_label, best_mask_np, best_mask_original = process_masks(APIprocessed_results, processed_image)
+            result_label, best_mask_np, best_mask_original, best_score = process_masks(APIprocessed_results, processed_image)
 
             # Prepare response according to the result
             if result_label == "Cataract" and best_mask_original is not None:
@@ -52,7 +52,7 @@ async def predict(image: UploadFile = File(...)):
                     "status": "success",
                     "result": {
                         "prediction": "Cataract",
-                        "confidence": "high",  # You could calculate this based on the score
+                        "score NP": best_score, 
                         "best_mask": {
                             "counts": best_mask_original["counts"],
                             "size": best_mask_original["size"]

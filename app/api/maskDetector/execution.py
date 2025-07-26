@@ -237,10 +237,12 @@ def process_masks(
     # 6) Extract binary mask from the best selection (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
     best_mask_np: np.ndarray = decoded_masks[best_idx]["segmentation"].astype(np.uint8)
     best_mask_original: Dict[str, Any] = original_masks[best_idx]
-    
+    best_mask_score = scores[best_idx]
+
     logger.info(f"Final mask extracted. Shape: {best_mask_np.shape}")
     logger.info(f"Active pixels in final mask: {np.sum(best_mask_np)}")
     logger.info(f"Original data of the best mask: counts length={len(best_mask_original['counts'])}, size={best_mask_original['size']}")
+    logger.info(f"Score NP: {scores[best_idx]:.4f}")
     logger.info("=== PROCESSING COMPLETED SUCCESSFULLY ===")
 
-    return result_label, best_mask_np, best_mask_original
+    return result_label, best_mask_np, best_mask_original, best_mask_score
