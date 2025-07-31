@@ -36,8 +36,9 @@ def predict_vertex_ai_rest(image_path: str) -> dict:
 
     # Endpoint URL (dedicated domain)
     url = (
-        "https://6903909377107820544.us-central1-202589491823.prediction.vertexai.goog/"
-        "v1/projects/202589491823/locations/us-central1/endpoints/6903909377107820544:predict"
+
+        "https://3608891831477075968.us-east1-202589491823.prediction.vertexai.goog/"
+        "v1/projects/202589491823/locations/us-east1/endpoints/3608891831477075968:predict"
     )
 
     headers = {

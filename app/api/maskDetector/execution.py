@@ -17,7 +17,7 @@ def process_masks(
     maskData: List[Dict[str, Any]],
     processed_image: bytes,
     k: int = 36,
-    visualize: bool = True
+    visualize: bool = False
 ) -> Tuple[str, Optional[np.ndarray], Optional[Dict[str, Any]]]:
     """
     Processes binary masks in SAM format applying exactly the same
@@ -232,7 +232,7 @@ def process_masks(
         
         if visualize:
             print("No Cataract — no mask fell within the specified range.")
-        return "No Cataract", None, None
+        return "No Cataract", None, None, None
 
     # 6) Extract binary mask from the best selection (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
     best_mask_np: np.ndarray = decoded_masks[best_idx]["segmentation"].astype(np.uint8)
