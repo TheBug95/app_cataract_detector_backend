@@ -245,4 +245,4 @@ def process_masks(
     logger.info(f"Score NP: {scores[best_idx]:.4f}")
     logger.info("=== PROCESSING COMPLETED SUCCESSFULLY ===")
 
-    return result_label, best_mask_np, best_mask_original, best_mask_score
+    return result_label, best_mask_np, best_mask_original, best_mask_score, t_min, t_max
