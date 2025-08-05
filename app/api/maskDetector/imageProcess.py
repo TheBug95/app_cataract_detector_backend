@@ -12,7 +12,7 @@ def decode_sam_rle(rle_data: dict) -> np.ndarray:
     Decodes an RLE mask from SAM format to a binary matrix
     
     Args:
-        rle_data: Dictionary with {'counts': str, 'size': [height, width]}
+        rle_data: Dictionary with {'counts': str, 'size': [height, width] }
     
     Returns:
         Binary mask as numpy array (0=background, 1=object)
