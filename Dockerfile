@@ -1,4 +1,4 @@
-# Imagen base con Python
+# Imagen base co n Python
 FROM python:3.11-slim
 
 # Establece el directorio de trabajo dentro del contenedor
