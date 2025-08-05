@@ -49,7 +49,7 @@ def process_masks(
         logger.info(f"Image size: {img_pil.size} (W x H)")
     except Exception as e:
         logger.error(f"Error loading image from bytes: {str(e)}")
-        return "No Cataract", None, None
+        return "No Cataract", None, None, None, None, None
     
     # 2) Decode all RLE masks
     logger.info("=== DECODING RLE MASKS ===")
@@ -93,7 +93,7 @@ def process_masks(
 
     if not decoded_masks:
         logger.error("No valid masks to process")
-        return "No Cataract", None, None
+        return "No Cataract", None, None, None, None, None
 
     logger.info(f"=== {len(decoded_masks)} MASKS DECODED SUCCESSFULLY ===")
 
@@ -232,7 +232,7 @@ def process_masks(
         
         if visualize:
             print("No Cataract — no mask fell within the specified range.")
-        return "No Cataract", None, None, None
+        return "No Cataract", None, None, None, t_min, t_max
 
     # 6) Extract binary mask from the best selection (EXACTLY THE SAME AS THE ORIGINAL FUNCTION)
     best_mask_np: np.ndarray = decoded_masks[best_idx]["segmentation"].astype(np.uint8)

@@ -46,10 +46,10 @@ async def predict(image: UploadFile = File(...)):
             # Process the masks
             result_label, best_mask_np, best_mask_original, best_score, t_min, t_max = process_masks(APIprocessed_results, processed_image)
 
-            confidence_score = (best_score - t_min) / (t_max - t_min) if t_max > t_min else 0
-
             # Prepare response according to the result
             if result_label == "Cataract" and best_mask_original is not None:
+                confidence_score = (best_score - t_min) / (t_max - t_min) if t_max > t_min else 0
+                
                 return {
                     "status": "success",
                     "result": {
