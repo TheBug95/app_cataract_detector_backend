@@ -11,7 +11,7 @@ def predict_vertex_ai_rest(image_path: str) -> dict:
     Send image to Vertex AI SAM endpoint and return processed masks
     
     Args:
-        image_path: Path to the image file
+        image_path: Path to the image file 
         
     Returns:
         Dictionary containing processed mask data with keys:
